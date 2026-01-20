@@ -24,19 +24,19 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS (frontend + API on same server, but safe for demos)
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # OK for hackathon / demo
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register API routes
-app.include_router(chat_router, prefix="/api")
+# ✅ FIX: NO PREFIX HERE
+app.include_router(chat_router)
 
-# Absolute path handling (important for Docker / Render)
+# Absolute path handling (Docker / Render safe)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
 
@@ -50,10 +50,9 @@ app.mount(
 # Serve frontend UI
 @app.get("/", include_in_schema=False)
 def serve_frontend():
-    index_path = os.path.join(FRONTEND_DIR, "index.html")
-    return FileResponse(index_path)
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
-# Health check (VERY IMPORTANT for Render)
+# Health check (Render friendly)
 @app.get("/health", include_in_schema=False)
 def health_check():
     return JSONResponse({"status": "ok"})

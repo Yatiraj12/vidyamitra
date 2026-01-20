@@ -3,10 +3,8 @@ console.log("script.js loaded");
 const chatContainer = document.getElementById("chatContainer");
 const userInput = document.getElementById("userInput");
 const languageSelect = document.getElementById("languageSelect");
-const sendBtn = document.getElementById("sendBtn");
 
-// API endpoint (works locally & on Render)
-const API_URL = "/api/chat";
+const API_URL = "/chat";
 
 function addMessage(text, sender) {
   const messageDiv = document.createElement("div");
@@ -20,7 +18,6 @@ async function sendMessage() {
   const text = userInput.value.trim();
   if (!text) return;
 
-  // Show user message
   addMessage(text, "user");
   userInput.value = "";
 
@@ -40,16 +37,11 @@ async function sendMessage() {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
+      throw new Error("HTTP error " + response.status);
     }
 
     const data = await response.json();
-
-    if (data.answer) {
-      addMessage(data.answer, "bot");
-    } else {
-      addMessage("No response received from server.", "bot");
-    }
+    addMessage(data.answer, "bot");
 
   } catch (error) {
     console.error("Chat API error:", error);
@@ -60,14 +52,8 @@ async function sendMessage() {
   }
 }
 
-// Send on Enter key
 userInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter") {
     sendMessage();
   }
 });
-
-// Optional send button support
-if (sendBtn) {
-  sendBtn.addEventListener("click", sendMessage);
-}

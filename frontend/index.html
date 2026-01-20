@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vidyamitra – Digital CRP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+
+  <!-- Floating Alphabet Background -->
+  <div class="floating-bg">
+    <span>A</span><span>अ</span><span>ಅ</span>
+    <span>B</span><span>ब</span><span>ಕ</span>
+    <span>C</span><span>ग</span><span>ತ</span>
+    <span>D</span><span>म</span><span>ಪ</span>
+    <span>E</span><span>श</span><span>ರ</span>
+    <span>F</span><span>ल</span><span>ನ</span>
+  </div>
+
+  <!-- Chat App -->
+  <div class="app-container">
+
+    <header class="app-header">
+      <h1>Vidyamitra</h1>
+      <p>Digital Cluster Resource Person for Teachers</p>
+    </header>
+
+    <div class="controls">
+      <select id="languageSelect">
+        <option value="English">English</option>
+        <option value="Kannada">Kannada</option>
+        <option value="Hindi">Hindi</option>
+      </select>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+      <div class="message bot">
+        Hello! I am Vidyamitra.  
+        I can help you with classroom teaching, student learning challenges,
+        and practical teaching strategies.
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input
+        type="text"
+        id="userInput"
+        placeholder="Ask your teaching question..."
+        autocomplete="off"
+      />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

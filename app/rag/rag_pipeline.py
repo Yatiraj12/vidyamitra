@@ -79,7 +79,7 @@ class RAGPipeline:
         answer = self.llm.generate(
             final_prompt,
             temperature=0.3,
-            max_tokens=350,
+            max_tokens=450,
         )
 
         # 6️⃣ Translation

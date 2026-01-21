@@ -4,7 +4,8 @@ const chatContainer = document.getElementById("chatContainer");
 const userInput = document.getElementById("userInput");
 const languageSelect = document.getElementById("languageSelect");
 
-const API_URL = "/chat";
+// ✅ FIX: explicit origin (Render-safe)
+const API_URL = window.location.origin + "/chat";
 
 function addMessage(text, sender) {
   const messageDiv = document.createElement("div");
@@ -30,23 +31,21 @@ async function sendMessage() {
   try {
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-      throw new Error("HTTP error " + response.status);
+      throw new Error("HTTP " + response.status);
     }
 
     const data = await response.json();
     addMessage(data.answer, "bot");
 
   } catch (error) {
-    console.error("Chat API error:", error);
+    console.error("Frontend → Backend error:", error);
     addMessage(
-      "Unable to connect to the server. Please try again later.",
+      "Unable to connect to the server. Please try again.",
       "bot"
     );
   }

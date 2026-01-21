@@ -118,8 +118,10 @@ class VectorStore:
         Returns:
             List of chunks with similarity scores
         """
+        # ✅ FIX: DO NOT crash if index is missing (Render-safe)
         if self.index is None:
-            raise ValueError("Vector index not loaded")
+            print("⚠️ Vector index not loaded. Returning empty results.")
+            return []
 
         query_embedding = self.embedding_model.encode(
             [query], convert_to_numpy=True

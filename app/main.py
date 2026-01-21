@@ -1,9 +1,6 @@
 """
 Main FastAPI entry point for Vidyamitra
-- Loads environment variables
-- Registers API routes
-- Serves frontend
-- Render & Docker compatible
+Memory-optimized for Render deployment
 """
 
 from dotenv import load_dotenv
@@ -23,7 +20,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,36 +29,31 @@ app.add_middleware(
 )
 
 # API routes
-app.include_router(chat_router)
+app.include_router(chat_router, prefix="/api")
 
-# Paths
+# Frontend paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
 
-# Static files
 app.mount(
     "/static",
     StaticFiles(directory=FRONTEND_DIR),
     name="static",
 )
 
-# Frontend UI
 @app.get("/", include_in_schema=False)
 def serve_frontend():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
-# Health check (Render requirement)
 @app.get("/health", include_in_schema=False)
-def health():
+def health_check():
     return JSONResponse({"status": "ok"})
 
-# 🔥 IMPORTANT: Warm-up to avoid blank responses
+# 🔥 MEMORY-SAFE WARM-UP (LLM ONLY)
 @app.on_event("startup")
 def warm_up():
-    print("🔥 Warming up models and vector store...")
-    from app.retrieval.vector_store import get_vector_store
     from app.rag.llm import get_llm
 
-    get_vector_store()
+    print("🔥 Warming up LLM only (memory-safe)...")
     get_llm()
     print("✅ Warm-up complete")

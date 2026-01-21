@@ -34,6 +34,7 @@ Instructions:
 - Give a direct, practical answer based on the context
 - Focus on classroom teaching strategies
 - Use simple language teachers can apply immediately
+- End your response with a complete sentence.
 - If the context is insufficient, say so briefly and provide general pedagogical guidance
 - Keep the response concise (4–6 sentences)
 

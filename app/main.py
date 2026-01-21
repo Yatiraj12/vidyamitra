@@ -2,8 +2,8 @@
 Main FastAPI entry point for Vidyamitra
 - Loads environment variables
 - Registers API routes
-- Serves frontend (single-server deployment)
-- Render / Docker compatible
+- Serves frontend
+- Render & Docker compatible
 """
 
 from dotenv import load_dotenv
@@ -17,14 +17,13 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from app.api.chat import router as chat_router
 
-# Create FastAPI app
 app = FastAPI(
     title="Vidyamitra",
     description="AI-powered digital CRP for teachers using RAG",
     version="1.0.0",
 )
 
-# Enable CORS
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,26 +32,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ FIX: NO PREFIX HERE
+# API routes
 app.include_router(chat_router)
 
-# Absolute path handling (Docker / Render safe)
+# Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
 
-# Serve frontend static assets
+# Static files
 app.mount(
     "/static",
     StaticFiles(directory=FRONTEND_DIR),
     name="static",
 )
 
-# Serve frontend UI
+# Frontend UI
 @app.get("/", include_in_schema=False)
 def serve_frontend():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
-# Health check (Render friendly)
+# Health check (Render requirement)
 @app.get("/health", include_in_schema=False)
-def health_check():
+def health():
     return JSONResponse({"status": "ok"})
+
+# 🔥 IMPORTANT: Warm-up to avoid blank responses
+@app.on_event("startup")
+def warm_up():
+    print("🔥 Warming up models and vector store...")
+    from app.retrieval.vector_store import get_vector_store
+    from app.rag.llm import get_llm
+
+    get_vector_store()
+    get_llm()
+    print("✅ Warm-up complete")

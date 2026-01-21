@@ -2,12 +2,12 @@
 RAG Pipeline Orchestration Module for Vidyamitra
 Handles:
 - Casual chat
-- CRP-style RAG when data exists
-- LLM fallback when data is missing
-- Language translation
+- RAG from CRP material
+- Fallback to LLM if data not found
+- Translation
 """
 
-from typing import Dict
+from typing import Dict, List
 from app.retrieval.vector_store import get_vector_store
 from app.rag.llm import get_llm
 from app.rag.prompt import (
@@ -18,12 +18,11 @@ from app.rag.prompt import (
 
 
 def is_casual_query(query: str) -> bool:
-    casual_phrases = [
+    casual_phrases = {
         "hi", "hello", "hey",
-        "how are you",
-        "good morning", "good evening",
-        "thanks", "thank you"
-    ]
+        "thanks", "thank you",
+        "good morning", "good evening"
+    }
     q = query.lower().strip()
     return q in casual_phrases or len(q.split()) <= 2
 
@@ -45,82 +44,58 @@ class RAGPipeline:
         if is_casual_query(user_query):
             answer = (
                 "Hello! I am Vidyamitra. "
-                "I can help you with classroom teaching, student learning challenges, "
-                "and practical teaching strategies. "
-                "Please ask your question."
+                "I can help you with classroom teaching, "
+                "student learning challenges, and practical teaching strategies."
             )
-
             return {
                 "answer": self.llm.translate(answer, language),
                 "sources": None,
             }
 
-        # 2️⃣ Retrieve chunks
-        retrieved_chunks = self.vector_store.search(
-            user_query, top_k=self.top_k
-        )
+        # 2️⃣ Retrieval (SAFE)
+        retrieved_chunks = []
+        try:
+            retrieved_chunks = self.vector_store.search(
+                user_query, top_k=self.top_k
+            )
+        except Exception:
+            retrieved_chunks = []
 
-        # 3️⃣ Decide: RAG or LLM fallback
-        use_rag = (
-            retrieved_chunks
-            and retrieved_chunks[0].get("score", 0) <= -0.1
-        )
-
-        # 4️⃣ RAG PATH (data exists)
-        if use_rag:
+        # 3️⃣ Context handling
+        if retrieved_chunks:
             context = format_context_from_chunks(retrieved_chunks)
-
-            system_message = get_system_message()
-            user_prompt = get_user_prompt(user_query, context)
-            final_prompt = f"{system_message}\n\n{user_prompt}"
-
-            answer = self.llm.generate(
-                final_prompt,
-                temperature=0.3,
-                max_tokens=300,
-            )
-
-        # 5️⃣ LLM FALLBACK PATH (no data)
         else:
-            fallback_prompt = f"""
-You are Vidyamitra, a digital Cluster Resource Person (CRP).
-
-The following question is not directly covered in the available
-teacher training materials. Provide general, responsible pedagogical
-guidance suitable for school teachers.
-
-Teacher's Question:
-{user_query}
-
-Instructions:
-- Clearly state that this is general guidance
-- Keep the advice classroom-focused
-- Avoid policy or administrative discussion
-- Keep the response concise (4–6 sentences)
-
-Response:
-""".strip()
-
-            answer = self.llm.generate(
-                fallback_prompt,
-                temperature=0.4,
-                max_tokens=300,
+            context = (
+                "No specific training material was found. "
+                "Answer using general classroom teaching best practices."
             )
 
-        # 6️⃣ Translate if needed
+        # 4️⃣ Prompt
+        system_message = get_system_message()
+        user_prompt = get_user_prompt(user_query, context)
+        final_prompt = f"{system_message}\n\n{user_prompt}"
+
+        # 5️⃣ LLM generation
+        answer = self.llm.generate(
+            final_prompt,
+            temperature=0.3,
+            max_tokens=350,
+        )
+
+        # 6️⃣ Translation
         answer = self.llm.translate(answer, language)
 
         response = {"answer": answer}
 
-        if return_sources:
+        if return_sources and retrieved_chunks:
             response["sources"] = [
                 {
-                    "text": chunk.get("text", "")[:200] + "...",
-                    "metadata": chunk.get("metadata", {}),
-                    "score": chunk.get("score", 0),
+                    "text": c.get("text", "")[:200] + "...",
+                    "metadata": c.get("metadata", {}),
+                    "score": c.get("score", 0),
                 }
-                for chunk in retrieved_chunks
-            ] if use_rag else []
+                for c in retrieved_chunks
+            ]
 
         return response
 

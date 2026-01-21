@@ -81,7 +81,7 @@ Text:
             model=self.model_name,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
-            max_tokens=300,
+            max_tokens=450,
         )
 
         raw = response.choices[0].message.content or ""
